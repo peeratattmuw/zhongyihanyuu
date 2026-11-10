@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ฝึกคัดคำศัพท์จีน</title>
+<style>
+:root{--bg:#f3f1ec;--surf:#fffdf8;--ink:#1f2a2e;--mute:#6b777b;--line:#d9d4c8;--jade:#1f6b5c;--jadeink:#fff;--red:#b3392f;--grid:#e8c9c4;--box:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14201e;--surf:#1c2b28;--ink:#eef2ee;--mute:#9bb0aa;--line:#33463f;--jade:#5fc2a8;--jadeink:#0d1b18;--red:#ff8f84;--grid:#5a3a38;--box:#f7f4ec}}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--ink);font-family:"Sarabun","Noto Sans Thai","Noto Sans SC",system-ui,sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:520px;margin:0 auto;padding:16px;min-height:100%;display:flex;flex-direction:column;gap:14px}
+h1{font-size:22px;margin:8px 0 0}
+p{margin:0;color:var(--mute)}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:16px}
+button{font:inherit;border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:10px;padding:12px 14px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--jade);outline-offset:2px}
+button.main{background:var(--jade);color:var(--jadeink);border-color:var(--jade);font-weight:700}
+button.bad{border-color:var(--red);color:var(--red);font-weight:700}
+.menu{display:grid;gap:10px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--jade);width:0}
+.top{display:flex;justify-content:space-between;font-size:14px;color:var(--mute)}
+.pinyin{font-size:34px;font-weight:700;text-align:center;letter-spacing:.5px}
+.mean{text-align:center;font-size:18px;margin-top:4px}
+.pos{color:var(--mute);font-size:14px}
+.pad{position:relative;width:100%;margin:0 auto;background:var(--box);border-radius:12px;border:1px solid var(--line);overflow:hidden;touch-action:none}
+.pad canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.inv{visibility:hidden}
+.ans{font-size:48px;text-align:center;font-family:"Noto Serif SC","Songti SC",serif;color:var(--jade);line-height:1.2;word-break:keep-all}
+.hidden{display:none}
+#b1,#b2{position:sticky;bottom:0;background:var(--bg);padding:8px 0;z-index:5}
+.big{font-size:44px;font-weight:700;text-align:center}
+.list{display:grid;gap:6px;font-size:18px}
+.list div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+// เพิ่มบทใหม่: copy บล็อก {n:..., w:[...]} แล้วเติมคำศัพท์ [ตัวจีน, พินอิน, ชนิดคำ, คำแปล]
+const CH=[{n:5,w:[
+["津液","jīnyè","n.","body fluid"],["雨露","yǔlù","n.","rain and dew"],["正常","zhèngcháng","adj.","normal"],
+["总称","zǒngchēng","n.","general term"],["概念","gàiniàn","n.","concept"],["略","lüè","adv.","slightly"],
+["清稀","qīngxī","adj.","clear and thin"],["稠厚","chóuhòu","adj.","dense and thick"],["并称","bìngchēng","v.","be called together"],
+["血脉","xuèmài","n.","blood vessels"],["灌溉","guàngài","v.","irrigate"],["无处不在","wú chù bú zài","","exist everywhere"],
+["四肢百骸","sì zhī bǎi hái","","limbs and bones, the whole body"],["关节髓窍","guānjié suǐ qiào","","joints, marrow and orifices"],
+["亏虚","kuīxū","adj.","deficient and weak"],["干燥","gānzào","adj.","dry"],["停滞","tíngzhì","v.","stagnate"],
+["水肿","shuǐzhǒng","v.","edema"],["痰饮","tányǐn","v.","phlegm and retained fluid"],["涎","xián","n.","saliva"],
+["涕","tì","n.","nasal mucus"],["唾","tuò","n.","saliva, spittle"],["异常","yìcháng","adj.","abnormal"],["治疗","zhìliáo","v.","treat, cure"],
+["水渠","shuǐqú","n.","canal, water channel"],["输布","shūbù","v.","transport and distribute"],
+["胸腔","xiōngqiāng","n.","thoracic cavity"],["腹腔","fùqiāng","n.","abdominal cavity"],["盆腔","péngqiāng","n.","pelvic cavity"],
+["膈膜","gémó","n.","diaphragm"],["脐","qí","n.","navel, umbilicus"]]},
+{n:6,w:[
+["强调","qiángdiào","v.","emphasize"],["脉诊","màizhěn","n.","diagnosis by feeling the pulse"],
+["临床","línchuáng","v.","(of a doctor) be at the sickbed rendering medical services"],["全面","quánmiàn","adj.","comprehensive, all-round"],
+["把握","bǎwò","v.","grasp, seize"],["切脉","qièmài","v.","feel the pulse"],["诊察","zhěnchá","v.","examine (a patient)"],
+["合称","héchēng","v.","be called together"],["四诊","sì zhěn","","four methods of diagnosis"],["形","xíng","n.","shape"],
+["态","tài","n.","state"],["嗅","xiù","v.","smell"],["患者","huànzhě","n.","patient"],["询问","xúnwèn","v.","ask, inquire"],
+["言语","yányǔ","n.","speech"],["脉象","màixiàng","n.","pulse condition"],["独具特色","dú jù tèsè","","unique, distinctive"],
+["诊法","zhěnfǎ","n.","diagnostic method"],["综合","zònghé","v.","synthesize, sum up"],["四诊合参","sì zhěn hé cān","","combine the four methods of diagnosis"],
+["诊断","zhěnduàn","v.","diagnose"],
+["敏锐","mǐnruì","adj.","acute, keen"],["技巧","jìqiǎo","n.","skill, technique"],["搜集","sōují","v.","collect, gather"],
+["主诉","zhǔsù","n.","patient’s main complaint"],["现病史","xiànbìngshǐ","n.","history of the present illness"],
+["既往史","jìwǎngshǐ","n.","past medical history"],["经过","jīngguò","n.","process"],["和蔼可亲","héǎi kěqīn","","amiable"],
+["叙述","xùshù","v.","narrate"],["详实","xiángshí","adj.","detailed and accurate"]]},
+{n:7,w:[
+["留心","liúxīn","adj.","careful, attentive"],["观察","guānchá","v.","observe"],["触","chù","v.","touch, palpate"],["叩","kòu","v.","knock, tap"],
+["检查","jiǎnchá","v.","examine, check"],["了解","liǎojiě","v.","understand, know"],["藏象","zàngxiàng","n.","internal organs and their external manifestations"],
+["藏匙","cángnì","v.","hide, conceal"],["隐藏","yǐncáng","v.","hide, conceal"],["就……来讲","jiù……lái jiǎng","","in regard to, as far as ... is concerned"],
+["研究","yánjiū","v.","study, research"],["学问","xuéwèn","n.","knowledge, learning"],["学说","xuéshuō","n.","theory"],
+["指导","zhǐdǎo","v.","guide, direct"],["透过","tòuguò","v.","pass through"],["本质","běnzhì","n.","essence, nature"],
+["神采奕奕","shéncǎi yìyì","","glow with health and radiating vigor"],["窍","qiào","n.","orifice (of the human body)"],["于","yú","prep.","at, on, in"],
+["视物清晰","shì wù qīngxī","","see things clearly"],["自如","zìrú","adj.","free, smooth, with ease"],
+["融化","rónghuà","v.","melt"],["发芽","fāyá","v.","germinate"],["蝉鸣","chán míng","","buzz of cicadas"],
+["硕果累累","shuòguǒ lěilěi","","heavily laden with fruit"],["更替","gēngtì","v.","alternate, take turns"],
+["倦怡","juàndài","adj.","exhausted"],["盗汗","dàohàn","n.","night sweat"],["两胁","liǎngxié","n.","two sides of the chest"],
+["胀满","zhàngmǎn","adj.","fully swollen"]]},
+{n:9,w:[
+["抵御","dǐyù","v.","resist"],["邪气","xiéqì","n.","unhealthy/pathogenic qi"],["统称","tǒngchēng","n.","collective designation, general name/term"],
+["抵抗","dǐkàng","v.","resist, fight against"],["盛衰","shèng shuāi","","rise and fall"],["转归","zhuǎnguī","v.","develop and end"],
+["驱邪","qūxié","v.","drive out unhealthy qi"],["痊愈","quányù","v.","heal and recover completely"],["虚衰","xūshuāi","adj.","deficient and weak"],
+["日益滋长","rìyì zīzhǎng","","grow day by day"],["恶化","èhuà","v.","worsen"],["势均力敌","shì jūn lì dí","","be evenly matched in strength"],
+["相持","xiāngchí","v.","confront each other with neither side yielding"],["迁延难愈","qiān yán nán yù","","be long and difficult to heal"],
+["慢性病","mànxìngbìng","n.","chronic disease"],["后遗症","hòuyízhèng","n.","sequela"],
+["扶正祛邪","fú zhèng qū xié","","strengthen the healthy qi and eliminate the unhealthy qi"],
+["内因","nèiyīn","n.","internal cause"],["外因","wàiyīn","n.","external cause"],
+["凑","còu","v.","gather together"],["轻易","qīngyì","adv.","easily"],["异常","yìcháng","adv.","extremely, extraordinarily"],
+["防线","fángxiàn","n.","line of defense"],["辩证","biànzhèng","adj.","dialectical"],["养生保健","yǎngshēng bǎojiàn","","health care"],
+["过度","guòdù","adj.","excessive"],["损伤","sǔnshāng","v.","damage, hurt"],["有常","yǒucháng","adj.","regular"],
+["有节","yǒujié","adj.","with restraint"],["劳逸","láoyì","n.","labor and rest"],["有度","yǒudù","adj.","moderate, to a limited degree"],
+["回避","huíbì","v.","avoid"],["调畅","tiáochàng","v.","regulate and make smooth"],["养护","yǎnghù","v.","conserve, maintain"]]}];
+const ALL=CH.flatMap(c=>c.w).filter((w,k,a)=>a.findIndex(x=>x[0]===w[0])===k);
+const TH={"津液":"ของเหลวในร่างกาย","雨露":"ฝนและน้ำค้าง","正常":"ปกติ","总称":"ชื่อเรียกรวม","概念":"แนวคิด","略":"เล็กน้อย","清稀":"ใสและบาง","稠厚":"ข้นและหนา","并称":"เรียกรวมกัน","血脉":"หลอดเลือด","灌溉":"รดน้ำ หล่อเลี้ยง","无处不在":"มีอยู่ทุกหนแห่ง","四肢百骸":"แขนขาและกระดูกทั่วร่างกาย","关节髓窍":"ข้อต่อ ไขกระดูก และทวาร","亏虚":"พร่องและอ่อนแอ","干燥":"แห้ง","停滞":"ติดขัด คั่งค้าง","水肿":"อาการบวมน้ำ","痰饮":"เสมหะและของเหลวคั่งค้าง","涎":"น้ำลาย","涕":"น้ำมูก","吐":"น้ำลาย การถ่มน้ำลาย","异常":"ผิดปกติ / อย่างยิ่ง","治疗":"รักษา","水渠":"ทางน้ำ คลอง","输布":"ลำเลียงและกระจาย","胸腔":"ช่องอก","腹腔":"ช่องท้อง","盆腔":"ช่องเชิงกราน","膨膜":"กะบังลม","脐":"สะดือ",
+"强调":"เน้นย้ำ","脉诊":"การตรวจชีพจร","临床":"ทางคลินิก อยู่ข้างเตียงผู้ป่วย","全面":"รอบด้าน","把握":"จับประเด็น ประเมินให้แม่น","切脉":"จับชีพจร","诊察":"ตรวจวินิจฉัย","合称":"เรียกรวมกัน","四诊":"การวินิจฉัยสี่วิธี","形":"รูปร่าง","态":"ท่าทาง สภาพ","嗅":"ดมกลิ่น","患者":"ผู้ป่วย","询问":"สอบถาม","言语":"คำพูด การพูด","脉象":"ลักษณะชีพจร","独具特色":"มีเอกลักษณ์เฉพาะตัว","诊法":"วิธีตรวจวินิจฉัย","综合":"รวมเข้าด้วยกัน สังเคราะห์","四诊合参":"รวมการวินิจฉัยสี่วิธีเข้าด้วยกัน","诊断":"วินิจฉัย","敏锐":"ว่องไว เฉียบคม","技巧":"ทักษะ เทคนิค","搜集":"รวบรวม","主诉":"อาการสำคัญที่ผู้ป่วยบอก","现病史":"ประวัติความเจ็บป่วยปัจจุบัน","既往史":"ประวัติการเจ็บป่วยในอดีต","经过":"กระบวนการ ขั้นตอน","和蔼可亲":"เป็นมิตร อัธยาศัยดี","叙述":"เล่า บรรยาย","详实":"ละเอียดและถูกต้อง",
+"留心":"ใส่ใจ ระมัดระวัง","观察":"สังเกต","触":"สัมผัส คลำ","叩":"เคาะ","检查":"ตรวจ","了解":"เข้าใจ รู้","藏象":"อวัยวะภายในและอาการแสดงภายนอก","藏匙":"ซ่อน","隐藏":"ซ่อนเร้น","就……来讲":"ในแง่ของ…","研究":"ศึกษา วิจัย","学问":"ความรู้ วิชาการ","学说":"ทฤษฎี","指导":"ชี้แนะ แนะนำ","透过":"ผ่าน ผ่านทะลุ","本质":"แก่นแท้ ธรรมชาติ","神采奕奕":"สดใสมีชีวิตชีวา","窍":"ทวาร (ช่องเปิดของร่างกาย)","于":"ที่ บน ใน","视物清晰":"มองเห็นสิ่งต่างๆ ชัดเจน","自如":"คล่องแคล้ว ราบรื่น","融化":"ละลาย","发芽":"งอก","蝉鸣":"เสียงจักจั่นร้อง","硕果累累":"ผลดกเต็มต้น","更替":"สลับเปลี่ยน","倦怡":"อ่อนเพลีย","盗汗":"เหงื่อออกตอนกลางคืน","两胁":"สีข้างทั้งสองข้าง","胀满":"แน่นตึง บวมเต็ม",
+"抵御":"ต้านทาน","邪气":"พลังก่อโรค (เสียชี่)","统称":"ชื่อเรียกรวม","抵抗":"ต่อต้าน ต้านทาน","盛衰":"รุ่งเรืองและเสื่อมถอย","转归":"พัฒนาการและผลลัพธ์ของโรค","驱邪":"ขับพลังก่อโรค","痊愈":"หายสนิท","虚衰":"พร่องและอ่อนแอ","日益滋长":"เพิ่มพูนขึ้นทุกวัน","恶化":"แย่ลง","势均力敌":"สมน้ำสมเนื้อ","相持":"ยันกัน ต่างฝ่ายไม่ยอมกัน","迁延难愈":"เรื้อรังรักษาหายยาก","慢性病":"โรคเรื้อรัง","后遗症":"ผลแทรกซ้อนที่ตามมา","扶正祛邪":"เสริมพลังปกติ ขับพลังก่อโรค","内因":"สาเหตุภายใน","外因":"สาเหตุภายนอก","凑":"มารวมกัน","轻易":"ง่ายๆ","防线":"แนวป้องกัน","辩证":"เชิงวิภาษวิธี","养生保健":"ดูแลสุขภาพ","过度":"มากเกินไป","损伤":"บาดเจ็บ เสียหาย","有常":"สม่ำเสมอ","有节":"มีการควบคุม พอดี","劳逸":"การทำงานและการพักผ่อน","有度":"พอประมาณ","回避":"หลีกเลี่ยง","调畅":"ปรับให้ราบรื่น","养护":"ดูแลรักษา"};
+function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=.8;speechSynthesis.speak(u)}catch(e){}}
+function ld(){try{return JSON.parse(localStorage.getItem('dwrong')||'[]')}catch(e){return[]}}
+function sv(a){try{localStorage.setItem('dwrong',JSON.stringify(a))}catch(e){}}
+const app=document.getElementById('app');
+document.addEventListener('gesturestart',e=>e.preventDefault());
+let deck=[],i=0,wrong=[],ok=0,hint=true,listen=false,res=[],limit=0,timer=null,t0=0,tlimit=0,tmode='off',tleft=0,ttimer=null,tEnd=0,timedOut=false;
+
+function updTT(){const e=document.getElementById('tt');if(e){e.textContent='รวม '+Math.floor(tleft/60)+':'+String(Math.max(tleft,0)%60).padStart(2,'0');e.style.color=tmode==='down'&&tleft<=30?'var(--red)':''}}
+function menu(){
+  clearInterval(ttimer);
+  clearInterval(timer);
+  app.innerHTML=`<h1>ฝึกคัดคำศัพท์จีน</h1>
+  <p>ดูพินอินกับคำแปล แล้วเขียนตัวอักษรจีนลงในช่อง จากนั้นกดเฉลยเพื่อตรวจ</p>
+  <div class="menu card">
+   ${CH.slice().sort((a,b)=>a.n-b.n).map(c=>`<button data-s="${c.n}">บทที่ ${c.n} (${c.w.length} คำ)</button>`).join('')}
+   <button class="main" data-s="all">รวมทุกบท (${ALL.length} คำ)</button>
+   ${ld().length?`<button data-s="wrong">ทบทวนคำที่เคยผิด (${ld().length} คำ)</button>`:''}
+   <label style="display:flex;gap:8px;align-items:center;color:var(--mute)"><input type="checkbox" id="hint" ${hint?'checked':''}> แสดงเส้นช่วยกริด</label>
+   <label style="display:flex;gap:8px;align-items:center;color:var(--mute)"><input type="checkbox" id="lis" ${listen?'checked':''}> โหมดฟังเสียง (ซ่อนพินอินและคำแปล เล่นเสียงให้เขียนตาม)</label>
+   <label style="display:flex;gap:8px;align-items:center;color:var(--mute)">จับเวลาต่อคำ <select id="lim" style="font:inherit;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surf);color:var(--ink)">${[0,10,20,30,60].map(x=>`<option value="${x}" ${limit===x?'selected':''}>${x?x+' วินาที':'ไม่จับเวลา'}</option>`).join('')}</select></label>
+   <label style="display:flex;gap:8px;align-items:center;color:var(--mute)">จับเวลารวมทั้งรอบ <select id="tmode" style="font:inherit;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surf);color:var(--ink)">${[['off','ไม่จับเวลา'],['up','นับเดินหน้า'],['down','นับถอยหลัง']].map(m=>`<option value="${m[0]}" ${tmode===m[0]?'selected':''}>${m[1]}</option>`).join('')}</select><select id="tl" style="display:${tmode==='down'?'inline-block':'none'};font:inherit;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surf);color:var(--ink)">${[5,10,15,30,60].map(x=>`<option value="${x}" ${tlimit===x?'selected':''}>${x} นาที</option>`).join('')}</select></label>
+  </div>`;
+  const tmS=document.getElementById('tmode'),tlS=document.getElementById('tl');
+  tmS.onchange=()=>{tlS.style.display=tmS.value==='down'?'inline-block':'none'};
+  app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{hint=document.getElementById('hint').checked;listen=document.getElementById('lis').checked;limit=+document.getElementById('lim').value;tmode=document.getElementById('tmode').value;tlimit=+document.getElementById('tl').value;const k=b.dataset.s;start(k==='all'?ALL:k==='wrong'?ALL.filter(w=>ld().includes(w[0])):CH.find(c=>String(c.n)===k).w)});
+}
+function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
+function start(list){deck=shuffle(list);i=0;wrong=[];ok=0;res=[];t0=Date.now();timedOut=false;clearInterval(ttimer);tleft=tmode==='down'?tlimit*60:0;
+  if(tmode!=='off')ttimer=setInterval(()=>{tleft+=tmode==='down'?-1:1;updTT();if(tmode==='down'&&tleft<=0){clearInterval(ttimer);timedOut=true;done()}},1000);
+  show()}
+
+function show(){
+  clearInterval(timer);
+  if(i>=deck.length)return done();
+  const [zh,py,pos,en]=deck[i];
+  app.innerHTML=`<div class="top"><div class="row" style="flex:none"><button id="q" style="padding:6px 10px">ออก</button><button id="back" style="padding:6px 10px" ${i===0?'disabled':''}>← ย้อนกลับ</button></div><span>${tmode!=='off'?'<b id="tt"></b>  ':''}${limit?'<b id="tm"></b>  ':''}${i+1} / ${deck.length}</span></div>
+  <div class="bar"><i style="width:${i/deck.length*100}%"></i></div>
+  <div class="card"><div class="pinyin${listen?' inv':''}">${py}</div><div class="mean${listen?' inv':''}">${TH[zh]?TH[zh]+'<br><span class="pos">'+en+'</span>':en}</div><div class="pos${listen?' inv':''}" style="text-align:center">${pos}</div><div id="ans" class="ans inv">${zh}</div></div>
+  <div class="pad" id="pad"><canvas id="c"></canvas></div>
+  
+  <div class="row" id="b1"><button id="spk">ฟัง</button><button id="clr">ลบ</button><button class="main" id="rev">เฉลย</button></div>
+  <div class="row hidden" id="b2"><button id="again">อีกครั้ง</button><button class="bad" id="no">ผิด</button><button class="main" id="yes">เขียนถูก</button></div>`;
+  document.getElementById('q').onclick=menu;
+  document.getElementById('back').onclick=()=>{i--;show()};
+  setupCanvas(zh.length);updTT();
+  const reveal=()=>{
+    clearInterval(timer);
+    document.querySelectorAll('.pinyin,.mean,.pos').forEach(x=>x.classList.remove('inv'));document.getElementById('ans').classList.remove('inv');document.getElementById('b2').classList.remove('hidden');
+    document.getElementById('b1').classList.add('hidden');
+  };
+  document.getElementById('rev').onclick=reveal;
+  document.getElementById('spk').onclick=()=>speak(zh);
+  if(listen)speak(zh);
+  if(limit){let left=limit;const tm=document.getElementById('tm');tm.textContent=left+' วิ';
+    timer=setInterval(()=>{left--;tm.textContent=left+' วิ';if(left<=5)tm.style.color='var(--red)';if(left<=0)reveal()},1000)}
+  document.getElementById('again').onclick=()=>show();
+  document.getElementById('yes').onclick=()=>{res[i]='y';sv(ld().filter(z=>z!==deck[i][0]));i++;show()};
+  document.getElementById('no').onclick=()=>{res[i]='n';sv([...new Set([...ld(),deck[i][0]])]);i++;show()};
+}
+function setupCanvas(n){
+  const pad=document.getElementById('pad'),c=document.getElementById('c');
+  const cols=Math.min(n,4),rows0=Math.ceil(n/cols);
+  pad.style.aspectRatio=cols+'/'+rows0;
+  pad.style.width='min(100%, '+(40*cols/rows0)+'vh)';
+  const r=pad.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  c.width=r.width*dpr;c.height=r.height*dpr;
+  const g=c.getContext('2d',{desynchronized:true});g.scale(dpr,dpr);
+  const w=r.width,h=r.height;
+  function grid(){
+    g.clearRect(0,0,w,h);
+    if(!hint)return;
+    g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--grid');
+    g.lineWidth=1;g.setLineDash([4,4]);
+    const rows=rows0,ch=w/cols;
+    for(let k=0;k<n;k++){
+      const x=(k%cols)*ch,y=Math.floor(k/cols)*ch;
+      g.strokeRect(x+1,y+1,ch-2,ch-2);
+      g.beginPath();g.moveTo(x+ch/2,y);g.lineTo(x+ch/2,y+ch);g.moveTo(x,y+ch/2);g.lineTo(x+ch,y+ch/2);g.stroke();
+    }
+    g.setLineDash([]);
+  }
+  let strokes=[],cur=null;
+  function draw(){
+    grid();g.strokeStyle='#1b1b1b';g.lineWidth=4;g.lineCap='round';g.lineJoin='round';
+    strokes.forEach(s=>{g.beginPath();s.forEach((p,k)=>k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));if(s.length===1)g.lineTo(s[0][0]+.1,s[0][1]);g.stroke()});
+  }
+  const pt=e=>{const b=c.getBoundingClientRect();return[(e.clientX-b.left)*w/b.width,(e.clientY-b.top)*h/b.height]};
+  ['touchstart','touchmove','touchend'].forEach(t=>c.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+  c.onpointerdown=e=>{e.preventDefault();c.setPointerCapture(e.pointerId);const p=pt(e);cur=[p];strokes.push(cur);g.strokeStyle='#1b1b1b';g.lineWidth=4;g.lineCap='round';g.lineJoin='round';g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(p[0]+.1,p[1]);g.stroke()};
+  c.onpointermove=e=>{if(!cur)return;e.preventDefault();const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];g.strokeStyle='#1b1b1b';g.lineWidth=4;g.lineCap='round';g.lineJoin='round';for(const ev of (evs.length?evs:[e])){const a=cur[cur.length-1],p=pt(ev);cur.push(p);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(p[0],p[1]);g.stroke()}};
+  c.onpointerup=c.onpointercancel=()=>{cur=null};
+  document.getElementById('clr').onclick=()=>{strokes=[];draw()};
+  draw();
+}
+function done(){
+  ok=res.filter(r=>r==='y').length;clearInterval(ttimer);clearInterval(timer);tEnd=Date.now();wrong=deck.filter((_,k)=>res[k]!=='y');
+  const miss=wrong.length;
+  app.innerHTML=`<h1>${timedOut?'หมดเวลา':'จบรอบนี้'}</h1>
+  <div class="card"><div class="big">${ok} / ${deck.length}</div><p style="text-align:center">เขียนถูก ${ok} คำ ใช้เวลา ${Math.floor((tEnd-t0)/60000)} นาที ${Math.floor((tEnd-t0)/1000)%60} วินาที</p></div>
+  ${miss?`<div class="card"><b>คำที่ต้องทบทวน</b><div class="list">${wrong.map(w=>`<div><span>${w[0]}</span><span style="color:var(--mute);font-size:15px">${w[1]}</span></div>`).join('')}</div></div>
+  <button class="main" id="re">ฝึกเฉพาะคำที่ผิด (${miss})</button>`:'<p style="text-align:center">ถูกหมดทุกคำ</p>'}
+  <div class="row"><button id="bk">← ย้อนกลับ</button><button id="m">กลับเมนู</button></div>`;
+  document.getElementById('bk').onclick=()=>{i=deck.length-1;show()};
+  if(miss)document.getElementById('re').onclick=()=>start(wrong);
+  document.getElementById('m').onclick=menu;
+}
+menu();
+</script>
+</body>
+</html>
