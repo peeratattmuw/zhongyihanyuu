@@ -33,6 +33,10 @@ button.bad{border-color:var(--red);color:var(--red);font-weight:700}
 .inv{visibility:hidden}
 .ans{font-size:48px;text-align:center;font-family:"Noto Serif SC","Songti SC",serif;color:var(--jade);line-height:1.2;word-break:keep-all}
 .hidden{display:none}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.box{background:var(--surf);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;width:100%;max-width:380px;display:grid;gap:12px}
+.num{font:inherit;font-size:40px;font-weight:700;text-align:center;width:100%;padding:6px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);-webkit-user-select:text;user-select:text}
+input[type=range]{accent-color:var(--jade)}
 #b1,#b2{position:sticky;bottom:0;background:var(--bg);padding:8px 0;z-index:5}
 .big{font-size:44px;font-weight:700;text-align:center}
 .list{display:grid;gap:6px;font-size:18px}
@@ -78,7 +82,7 @@ const CH=[{n:5,w:[
 ["视物清晰","shì wù qīngxī","","see things clearly"],["自如","zìrú","adj.","free, smooth, with ease"],
 ["融化","rónghuà","v.","melt"],["发芽","fāyá","v.","germinate"],["蝉鸣","chán míng","","buzz of cicadas"],
 ["硕果累累","shuòguǒ lěilěi","","heavily laden with fruit"],["更替","gēngtì","v.","alternate, take turns"],
-["倦怡","juàndài","adj.","exhausted"],["盗汗","dàohàn","n.","night sweat"],["两胁","liǎngxié","n.","two sides of the chest"],
+["倦怠","juàndài","adj.","exhausted"],["盗汗","dàohàn","n.","night sweat"],["两胁","liǎngxié","n.","two sides of the chest"],
 ["胀满","zhàngmǎn","adj.","fully swollen"]]},
 {n:9,w:[
 ["抵御","dǐyù","v.","resist"],["邪气","xiéqì","n.","unhealthy/pathogenic qi"],["统称","tǒngchēng","n.","collective designation, general name/term"],
@@ -93,12 +97,52 @@ const CH=[{n:5,w:[
 ["防线","fángxiàn","n.","line of defense"],["辩证","biànzhèng","adj.","dialectical"],["养生保健","yǎngshēng bǎojiàn","","health care"],
 ["过度","guòdù","adj.","excessive"],["损伤","sǔnshāng","v.","damage, hurt"],["有常","yǒucháng","adj.","regular"],
 ["有节","yǒujié","adj.","with restraint"],["劳逸","láoyì","n.","labor and rest"],["有度","yǒudù","adj.","moderate, to a limited degree"],
-["回避","huíbì","v.","avoid"],["调畅","tiáochàng","v.","regulate and make smooth"],["养护","yǎnghù","v.","conserve, maintain"]]}];
+["回避","huíbì","v.","avoid"],["调畅","tiáochàng","v.","regulate and make smooth"],["养护","yǎnghù","v.","conserve, maintain"]]},
+{n:10,w:[
+["处方","chǔfāng","n.","prescription"],["彼此","bǐcǐ","pron.","each other, one another"],["鼻塞","bísè","v.","have a stuffy nose"],
+["喷嚏","pēntì","n.","sneeze"],["辨证","biànzhèng","v.","identify a syndrome"],["证型","zhèngxíng","n.","type of illness"],
+["风湿","fēngshī","n.","rheumatism"],["辛温","xīnwēn","adj.","pungent and warm"],["辛凉","xīnliáng","adj.","pungent and cold"],
+["疏风","shūfēng","v.","dispel pathogenic feng (one of the disease-causing elements)"],["祛湿","qūshī","v.","remove dampness"],
+["气虚","qìxū","adj.","deficient in qi"],["滋阴","zīyīn","v.","nourish yin"],["兼","jiān","adv.","simultaneously"],
+["宿疾","sùjí","n.","chronic ailment, old trouble"],["兼顾","jiāngù","v.","consider two or more things simultaneously"],
+["治法","zhìfǎ","n.","treatment method"],["辨证论治","biànzhèng lùnzhì","","diagnosis and treatment based on an overall analysis of the illness and the patient’s condition"],
+["同病","tóngbìng","n.","same disease"],["异治","yìzhì","v.","use different methods to treat (a disease)"],
+["壮实","zhuàngshí","adj.","strong, robust"],["益气","yìqì","v.","build up qi (vital energy)"],["解表","jiěbiǎo","v.","relieve external illness"],["扶阳","fúyáng","v.","strengthen yang"]]}];
 const ALL=CH.flatMap(c=>c.w).filter((w,k,a)=>a.findIndex(x=>x[0]===w[0])===k);
-const TH={"津液":"ของเหลวในร่างกาย","雨露":"ฝนและน้ำค้าง","正常":"ปกติ","总称":"ชื่อเรียกรวม","概念":"แนวคิด","略":"เล็กน้อย","清稀":"ใสและบาง","稠厚":"ข้นและหนา","并称":"เรียกรวมกัน","血脉":"หลอดเลือด","灌溉":"รดน้ำ หล่อเลี้ยง","无处不在":"มีอยู่ทุกหนแห่ง","四肢百骸":"แขนขาและกระดูกทั่วร่างกาย","关节髓窍":"ข้อต่อ ไขกระดูก และทวาร","亏虚":"พร่องและอ่อนแอ","干燥":"แห้ง","停滞":"ติดขัด คั่งค้าง","水肿":"อาการบวมน้ำ","痰饮":"เสมหะและของเหลวคั่งค้าง","涎":"น้ำลาย","涕":"น้ำมูก","吐":"น้ำลาย การถ่มน้ำลาย","异常":"ผิดปกติ / อย่างยิ่ง","治疗":"รักษา","水渠":"ทางน้ำ คลอง","输布":"ลำเลียงและกระจาย","胸腔":"ช่องอก","腹腔":"ช่องท้อง","盆腔":"ช่องเชิงกราน","膨膜":"กะบังลม","脐":"สะดือ",
+const TH={"津液":"ของเหลวในร่างกาย","雨露":"ฝนและน้ำค้าง","正常":"ปกติ","总称":"ชื่อเรียกรวม","概念":"แนวคิด","略":"เล็กน้อย","清稀":"ใสและบาง","稠厚":"ข้นและหนา","并称":"เรียกรวมกัน","血脉":"หลอดเลือด","灌溉":"รดน้ำ หล่อเลี้ยง","无处不在":"มีอยู่ทุกหนแห่ง","四肢百骸":"แขนขาและกระดูกทั่วร่างกาย","关节髓窍":"ข้อต่อ ไขกระดูก และทวาร","亏虚":"พร่องและอ่อนแอ","干燥":"แห้ง","停滞":"ติดขัด คั่งค้าง","水肿":"อาการบวมน้ำ","痰饮":"เสมหะและของเหลวคั่งค้าง","涎":"น้ำลาย","涕":"น้ำมูก","唾":"น้ำลาย การถ่มน้ำลาย","异常":"ผิดปกติ / อย่างยิ่ง","治疗":"รักษา","水渠":"ทางน้ำ คลอง","输布":"ลำเลียงและกระจาย","胸腔":"ช่องอก","腹腔":"ช่องท้อง","盆腔":"ช่องเชิงกราน","膈膜":"กะบังลม","脐":"สะดือ",
 "强调":"เน้นย้ำ","脉诊":"การตรวจชีพจร","临床":"ทางคลินิก อยู่ข้างเตียงผู้ป่วย","全面":"รอบด้าน","把握":"จับประเด็น ประเมินให้แม่น","切脉":"จับชีพจร","诊察":"ตรวจวินิจฉัย","合称":"เรียกรวมกัน","四诊":"การวินิจฉัยสี่วิธี","形":"รูปร่าง","态":"ท่าทาง สภาพ","嗅":"ดมกลิ่น","患者":"ผู้ป่วย","询问":"สอบถาม","言语":"คำพูด การพูด","脉象":"ลักษณะชีพจร","独具特色":"มีเอกลักษณ์เฉพาะตัว","诊法":"วิธีตรวจวินิจฉัย","综合":"รวมเข้าด้วยกัน สังเคราะห์","四诊合参":"รวมการวินิจฉัยสี่วิธีเข้าด้วยกัน","诊断":"วินิจฉัย","敏锐":"ว่องไว เฉียบคม","技巧":"ทักษะ เทคนิค","搜集":"รวบรวม","主诉":"อาการสำคัญที่ผู้ป่วยบอก","现病史":"ประวัติความเจ็บป่วยปัจจุบัน","既往史":"ประวัติการเจ็บป่วยในอดีต","经过":"กระบวนการ ขั้นตอน","和蔼可亲":"เป็นมิตร อัธยาศัยดี","叙述":"เล่า บรรยาย","详实":"ละเอียดและถูกต้อง",
-"留心":"ใส่ใจ ระมัดระวัง","观察":"สังเกต","触":"สัมผัส คลำ","叩":"เคาะ","检查":"ตรวจ","了解":"เข้าใจ รู้","藏象":"อวัยวะภายในและอาการแสดงภายนอก","藏匙":"ซ่อน","隐藏":"ซ่อนเร้น","就……来讲":"ในแง่ของ…","研究":"ศึกษา วิจัย","学问":"ความรู้ วิชาการ","学说":"ทฤษฎี","指导":"ชี้แนะ แนะนำ","透过":"ผ่าน ผ่านทะลุ","本质":"แก่นแท้ ธรรมชาติ","神采奕奕":"สดใสมีชีวิตชีวา","窍":"ทวาร (ช่องเปิดของร่างกาย)","于":"ที่ บน ใน","视物清晰":"มองเห็นสิ่งต่างๆ ชัดเจน","自如":"คล่องแคล้ว ราบรื่น","融化":"ละลาย","发芽":"งอก","蝉鸣":"เสียงจักจั่นร้อง","硕果累累":"ผลดกเต็มต้น","更替":"สลับเปลี่ยน","倦怡":"อ่อนเพลีย","盗汗":"เหงื่อออกตอนกลางคืน","两胁":"สีข้างทั้งสองข้าง","胀满":"แน่นตึง บวมเต็ม",
-"抵御":"ต้านทาน","邪气":"พลังก่อโรค (เสียชี่)","统称":"ชื่อเรียกรวม","抵抗":"ต่อต้าน ต้านทาน","盛衰":"รุ่งเรืองและเสื่อมถอย","转归":"พัฒนาการและผลลัพธ์ของโรค","驱邪":"ขับพลังก่อโรค","痊愈":"หายสนิท","虚衰":"พร่องและอ่อนแอ","日益滋长":"เพิ่มพูนขึ้นทุกวัน","恶化":"แย่ลง","势均力敌":"สมน้ำสมเนื้อ","相持":"ยันกัน ต่างฝ่ายไม่ยอมกัน","迁延难愈":"เรื้อรังรักษาหายยาก","慢性病":"โรคเรื้อรัง","后遗症":"ผลแทรกซ้อนที่ตามมา","扶正祛邪":"เสริมพลังปกติ ขับพลังก่อโรค","内因":"สาเหตุภายใน","外因":"สาเหตุภายนอก","凑":"มารวมกัน","轻易":"ง่ายๆ","防线":"แนวป้องกัน","辩证":"เชิงวิภาษวิธี","养生保健":"ดูแลสุขภาพ","过度":"มากเกินไป","损伤":"บาดเจ็บ เสียหาย","有常":"สม่ำเสมอ","有节":"มีการควบคุม พอดี","劳逸":"การทำงานและการพักผ่อน","有度":"พอประมาณ","回避":"หลีกเลี่ยง","调畅":"ปรับให้ราบรื่น","养护":"ดูแลรักษา"};
+"留心":"ใส่ใจ ระมัดระวัง","观察":"สังเกต","触":"สัมผัส คลำ","叩":"เคาะ","检查":"ตรวจ","了解":"เข้าใจ รู้","藏象":"อวัยวะภายในและอาการแสดงภายนอก","藏匙":"ซ่อน","隐藏":"ซ่อนเร้น","就……来讲":"ในแง่ของ…","研究":"ศึกษา วิจัย","学问":"ความรู้ วิชาการ","学说":"ทฤษฎี","指导":"ชี้แนะ แนะนำ","透过":"ผ่าน ผ่านทะลุ","本质":"แก่นแท้ ธรรมชาติ","神采奕奕":"สดใสมีชีวิตชีวา","窍":"ทวาร (ช่องเปิดของร่างกาย)","于":"ที่ บน ใน","视物清晰":"มองเห็นสิ่งต่างๆ ชัดเจน","自如":"คล่องแคล้ว ราบรื่น","融化":"ละลาย","发芽":"งอก","蝉鸣":"เสียงจักจั่นร้อง","硕果累累":"ผลดกเต็มต้น","更替":"สลับเปลี่ยน","倦怠":"อ่อนเพลีย","盗汗":"เหงื่อออกตอนกลางคืน","两胁":"สีข้างทั้งสองข้าง","胀满":"แน่นตึง บวมเต็ม",
+"抵御":"ต้านทาน","邪气":"พลังก่อโรค (เสียชี่)","统称":"ชื่อเรียกรวม","抵抗":"ต่อต้าน ต้านทาน","盛衰":"รุ่งเรืองและเสื่อมถอย","转归":"พัฒนาการและผลลัพธ์ของโรค","驱邪":"ขับพลังก่อโรค","痊愈":"หายสนิท","虚衰":"พร่องและอ่อนแอ","日益滋长":"เพิ่มพูนขึ้นทุกวัน","恶化":"แย่ลง","势均力敌":"สมน้ำสมเนื้อ","相持":"ยันกัน ต่างฝ่ายไม่ยอมกัน","迁延难愈":"เรื้อรังรักษาหายยาก","慢性病":"โรคเรื้อรัง","后遗症":"ผลแทรกซ้อนที่ตามมา","扶正祛邪":"เสริมพลังปกติ ขับพลังก่อโรค","内因":"สาเหตุภายใน","外因":"สาเหตุภายนอก","凑":"มารวมกัน","轻易":"ง่ายๆ","防线":"แนวป้องกัน","辩证":"เชิงวิภาษวิธี","养生保健":"ดูแลสุขภาพ","过度":"มากเกินไป","损伤":"บาดเจ็บ เสียหาย","有常":"สม่ำเสมอ","有节":"มีการควบคุม พอดี","劳逸":"การทำงานและการพักผ่อน","有度":"พอประมาณ","回避":"หลีกเลี่ยง","调畅":"ปรับให้ราบรื่น","养护":"ดูแลรักษา",
+"处方":"ใบสั่งยา (ตำรับยา)","彼此":"ซึ่งกันและกัน","鼻塞":"คัดจมูก","喷嚏":"จาม","辨证":"วิเคราะห์จำแนกกลุ่มอาการ","证型":"ชนิดของกลุ่มอาการ","风湿":"ลมชื้น (โรครูมาติก)","辛温":"รสเผ็ดอุ่น","辛凉":"รสเผ็ดเย็น","疏风":"ขับลม (กระจายลมก่อโรค)","祛湿":"ขับความชื้น","气虚":"ชี่พร่อง","滋阴":"บำรุงหยิน","兼":"พร้อมกัน ควบคู่","宿疾":"โรคเรื้อรังเก่า","兼顾":"ดูแลหลายด้านพร้อมกัน","治法":"วิธีรักษา","辨证论治":"วินิจฉัยและรักษาตามการวิเคราะห์อาการโดยรวม","同病":"โรคเดียวกัน","异治":"รักษาต่างวิธี","壮实":"แข็งแรงกำยำ","益气":"บำรุงชี่","解表":"ขับพิษภายนอก (คลายอาการภายนอก)","扶阳":"เสริมหยาง"};
+function pick(list,title){
+  const tot=list.length;
+  if(tot<=1){start(list);return}
+  const ov=document.createElement('div');ov.className='ov';
+  const d=Math.min(20,tot);
+  ov.innerHTML=`<div class="box"><b>${title}</b><p>เลือกจำนวนคำที่จะฝึก (มี ${tot} คำ)</p>
+  <input id="pn" class="num" type="number" inputmode="numeric" min="1" max="${tot}" value="${d}">
+  <input id="ps" type="range" min="1" max="${tot}" value="${d}" style="width:100%">
+  <div class="row" style="font-size:20px"><button data-d="-5">-5</button><button data-d="-1">-</button><button data-d="1">+</button><button data-d="5">+5</button></div>
+  <div class="row">${[10,20,30].filter(x=>x<tot).map(x=>`<button data-q="${x}">${x}</button>`).join('')}<button data-q="${tot}">ทั้งหมด</button></div>
+  <div class="row"><button id="pc">ยกเลิก</button><button class="main" id="pg">เริ่ม</button></div></div>`;
+  document.body.appendChild(ov);
+  const n=ov.querySelector('#pn'),s=ov.querySelector('#ps');
+  const clamp=v=>Math.max(1,Math.min(tot,Math.floor(+v)||1));
+  s.oninput=()=>{n.value=s.value};
+  n.oninput=()=>{if(n.value!=='')s.value=clamp(n.value)};
+  ov.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{n.value=s.value=b.dataset.q});
+  ov.querySelectorAll('[data-d]').forEach(b=>{
+    const st=()=>{n.value=s.value=clamp((+n.value||0)+(+b.dataset.d))};
+    let t1=null,t2=null;
+    const stop=()=>{clearTimeout(t1);clearInterval(t2);t1=t2=null};
+    b.onpointerdown=e=>{e.preventDefault();st();stop();t1=setTimeout(()=>{t2=setInterval(st,70)},400)};
+    b.onpointerup=b.onpointercancel=b.onpointerleave=stop;
+    b.oncontextmenu=e=>e.preventDefault();
+    b.onclick=e=>{if(e.detail===0)st()};
+  });
+  ov.querySelector('#pc').onclick=()=>ov.remove();
+  ov.querySelector('#pg').onclick=()=>{const k=clamp(n.value);ov.remove();start(shuffle(list).slice(0,k))};
+}
 function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=.8;speechSynthesis.speak(u)}catch(e){}}
 function ld(){try{return JSON.parse(localStorage.getItem('dwrong')||'[]')}catch(e){return[]}}
 function sv(a){try{localStorage.setItem('dwrong',JSON.stringify(a))}catch(e){}}
@@ -123,7 +167,8 @@ function menu(){
   </div>`;
   const tmS=document.getElementById('tmode'),tlS=document.getElementById('tl');
   tmS.onchange=()=>{tlS.style.display=tmS.value==='down'?'inline-block':'none'};
-  app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{hint=document.getElementById('hint').checked;listen=document.getElementById('lis').checked;limit=+document.getElementById('lim').value;tmode=document.getElementById('tmode').value;tlimit=+document.getElementById('tl').value;const k=b.dataset.s;start(k==='all'?ALL:k==='wrong'?ALL.filter(w=>ld().includes(w[0])):CH.find(c=>String(c.n)===k).w)});
+  app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{hint=document.getElementById('hint').checked;listen=document.getElementById('lis').checked;limit=+document.getElementById('lim').value;tmode=document.getElementById('tmode').value;tlimit=+document.getElementById('tl').value;const k=b.dataset.s;const L=k==='all'?ALL:k==='wrong'?ALL.filter(w=>ld().includes(w[0])):CH.find(c=>String(c.n)===k).w;
+    if(k==='wrong')start(L);else pick(L,k==='all'?'รวมทุกบท':'บทที่ '+k)});
 }
 function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
 function start(list){deck=shuffle(list);i=0;wrong=[];ok=0;res=[];t0=Date.now();timedOut=false;clearInterval(ttimer);tleft=tmode==='down'?tlimit*60:0;
